@@ -16,19 +16,19 @@ function scrapingTrigger() {
       var homeTeamHashTag = matchMasterValues[i_matchMasterValues][4];
       var awayTeamHashTag = matchMasterValues[i_matchMasterValues][5];
 
-      // -----Scraping-----
-      var html = UrlFetchApp.fetch(ticketUrl).getContentText();
+      // -----Scraping_JLeagueTicket-----
+      var html_JLeagueTicket = UrlFetchApp.fetch(ticketUrl).getContentText();
       // Parser: from().to()はfromとtoに挟まれた部分を抜き出します。build()で文字列、iterate()で文字列の配列が得られます。
 
       // GameInfo情報取得
       // 試合日・スタジアム
-      var doc_date = Parser.data(html)
+      var doc_date = Parser.data(html_JLeagueTicket)
         .from('<span class="day">')
         .to('</span>')
         .iterate();
       var gameDate = doc_date[0] + ' ' + doc_date[1];
 
-      var doc_stadium_div = Parser.data(html)
+      var doc_stadium_div = Parser.data(html_JLeagueTicket)
         .from('<div class="game-info-stat-place">')
         .to('</div>')
         .build();
@@ -42,12 +42,12 @@ function scrapingTrigger() {
       var seat = [];
       var price = [];
 
-      var doc_seatlist = Parser.data(html)
+      var doc_seatlist = Parser.data(html_JLeagueTicket)
         .from('<div class="seat-select-list-txt">')
         .to('</div>')
         .iterate();
 
-      var doc_seatlist_is_vacant = Parser.data(html)
+      var doc_seatlist_is_vacant = Parser.data(html_JLeagueTicket)
         .from('<div class="seat-select-list-img ')
         .to('">')
         .iterate();
@@ -147,7 +147,7 @@ function scrapingTrigger() {
         }
       });
       */
-      
+
 
     } catch (e) {
       Logger.log('[Error] ' + e);
