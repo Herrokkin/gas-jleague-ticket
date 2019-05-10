@@ -138,6 +138,19 @@ function scrapingTrigger() {
       tweetWithMedia(chart, status_txt);
       Logger.log('Tweet Done:\n' + status_txt);
 
+      /// -----For debug-----
+      /*
+      MailApp.sendEmail({
+        to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
+        subject: 'GAS Chart',
+        htmlBody: status_txt + '<br/><img src="cid:sampleCharts">',
+        inlineImages: {
+          sampleCharts: chart
+        }
+      });
+      */
+
+
       // -----Tweet Summary-----
       lastRow_seatPriceSheet = seatPriceSheet.getLastRow();
       lastCol_seatPriceSheet = seatPriceSheet.getLastColumn();
@@ -162,28 +175,23 @@ function scrapingTrigger() {
         tmp_dataForSummary_avg = Math.round(tmp_dataForSummary_sum / tmp_dataForSummary_numOfElements);
         tmp_dataForSummary_latest = dataForSummary[dataForSummary.length - 1][i_dataForSummary_col] ? dataForSummary[dataForSummary.length - 1][i_dataForSummary_col] : '-';
 
-        // 140文字制限のため、指定席 / 自由席で分離
+        // 140文字制限のため、指定席 or 自由席で分離
         if (i_dataForSummary_col < 7) {
           status_txt_dataForSummary_reserved += dataForSummary[0][i_dataForSummary_col] + ' / ' + tmp_dataForSummary_latest + ' / ' + tmp_dataForSummary_avg + '\n';
         } else {
           status_txt_dataForSummary_nonreserved += dataForSummary[0][i_dataForSummary_col] + ' / ' + tmp_dataForSummary_latest + ' / ' + tmp_dataForSummary_avg + '\n';
         }
       }
+
+      // リプライ形式でtweet
+      // #1 指定席
+      var recentTweet = Twitter.usertl(PropertiesService.getScriptProperties().getProperty('TWITTER_USER_ID'));
+      Twitter.tweet(status_txt_dataForSummary_reserved, recentTweet[0].id_str);
       Logger.log(status_txt_dataForSummary_reserved);
+      // #2 自由席
+      var recentTweet = Twitter.usertl(PropertiesService.getScriptProperties().getProperty('TWITTER_USER_ID'));
+      Twitter.tweet(status_txt_dataForSummary_nonreserved, recentTweet[0].id_str);
       Logger.log(status_txt_dataForSummary_nonreserved);
-
-      /// -----For debug-----
-      /*
-      MailApp.sendEmail({
-        to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
-        subject: 'GAS Chart',
-        htmlBody: status_txt + '<br/><img src="cid:sampleCharts">',
-        inlineImages: {
-          sampleCharts: chart
-        }
-      });
-      */
-
 
     } catch (e) {
       Logger.log('[Error] ' + e);
