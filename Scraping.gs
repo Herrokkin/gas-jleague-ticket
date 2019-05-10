@@ -84,6 +84,7 @@ function scrapingTrigger() {
         seatPriceSheet = SpreadsheetApp.getActive().getSheetByName('SeatPrice_' + matchId + '_' + cupTitle + '_' + homeTeam + 'v' + awayTeam);
       }
 
+
       // 出力開始
       var lastRow_seatPriceSheet = seatPriceSheet.getLastRow();
       var lastCol_seatPriceSheet = seatPriceSheet.getLastColumn();
@@ -125,6 +126,7 @@ function scrapingTrigger() {
         .setDataTable(dataTable);
       var chart = chartBuilder.build().getBlob();
 
+      // -----Tweet Chart-----
       var status_txt = '【ダイナミックプライシングチケット価格】' +
         '\n' + cupTitle + ' ' + homeTeam + ' v ' + awayTeam +
         '\n' + gameDate + ' @ ' + stadium +
@@ -135,6 +137,40 @@ function scrapingTrigger() {
 
       tweetWithMedia(chart, status_txt);
       Logger.log('Tweet Done:\n' + status_txt);
+
+      // -----Tweet Summary-----
+      lastRow_seatPriceSheet = seatPriceSheet.getLastRow();
+      lastCol_seatPriceSheet = seatPriceSheet.getLastColumn();
+
+      var dataForSummary = seatPriceSheet.getRange(1, 1, lastRow_seatPriceSheet, lastCol_seatPriceSheet).getValues();
+      var status_txt_dataForSummary_reserved = '席種 / 最新 / 平均\n';
+      var status_txt_dataForSummary_nonreserved = '';
+
+      for (var i_dataForSummary_col = 1; i_dataForSummary_col < dataForSummary[0].length; i_dataForSummary_col++) {
+        var tmp_dataForSummary_sum = 0;
+        var tmp_dataForSummary_numOfElements = 0;
+        var tmp_dataForSummary_avg = 0;
+        var tmp_dataForSummary_latest;
+
+        for (var i_dataForSummary_row = 1; i_dataForSummary_row < dataForSummary.length; i_dataForSummary_row++) {
+          if (dataForSummary[i_dataForSummary_row][i_dataForSummary_col]) {
+            tmp_dataForSummary_sum += dataForSummary[i_dataForSummary_row][i_dataForSummary_col];
+            tmp_dataForSummary_numOfElements++;
+          }
+        }
+
+        tmp_dataForSummary_avg = Math.round(tmp_dataForSummary_sum / tmp_dataForSummary_numOfElements);
+        tmp_dataForSummary_latest = dataForSummary[dataForSummary.length - 1][i_dataForSummary_col] ? dataForSummary[dataForSummary.length - 1][i_dataForSummary_col] : '-';
+
+        // 140文字制限のため、指定席 / 自由席で分離
+        if (i_dataForSummary_col < 7) {
+          status_txt_dataForSummary_reserved += dataForSummary[0][i_dataForSummary_col] + ' / ' + tmp_dataForSummary_latest + ' / ' + tmp_dataForSummary_avg + '\n';
+        } else {
+          status_txt_dataForSummary_nonreserved += dataForSummary[0][i_dataForSummary_col] + ' / ' + tmp_dataForSummary_latest + ' / ' + tmp_dataForSummary_avg + '\n';
+        }
+      }
+      Logger.log(status_txt_dataForSummary_reserved);
+      Logger.log(status_txt_dataForSummary_nonreserved);
 
       /// -----For debug-----
       /*
