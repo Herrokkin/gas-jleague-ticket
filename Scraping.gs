@@ -1,7 +1,8 @@
 function scrapingTrigger() {
+  var debug_mode = false; // true => Run scraping but not post to Twitter
+
   var matchMasterSheet = SpreadsheetApp.getActive().getSheetByName('MatchMaster');
   var matchMasterValues = matchMasterSheet.getRange(2, 1, matchMasterSheet.getLastRow(), matchMasterSheet.getLastColumn()).getValues();
-  Logger.log(matchMasterValues);
 
   // -----試合毎にScraping実施-----
   for (var i_matchMasterValues = 0; i_matchMasterValues < matchMasterValues.length - 1; i_matchMasterValues++) {
@@ -105,14 +106,13 @@ function scrapingTrigger() {
       var dataTable = Charts.newDataTable();
       // Add Column types
       dataTable.addColumn(Charts.ColumnType.DATE, data[0][0]);
-      for (var i_data = 1; i_data < data[0].length; i_data++) {
-        dataTable.addColumn(Charts.ColumnType.NUMBER, data[0][i_data]);
+      for (var i_data_chart_col = 1; i_data_chart_col < data[0].length; i_data_chart_col++) {
+        dataTable.addColumn(Charts.ColumnType.NUMBER, data[0][i_data_chart_col]);
       }
 
       // Add rows
-      for (var j_data = 1; j_data < data.length; j_data++) {
-        dataTable.addRow(data[j_data]);
-        Logger.log(data[j_data])
+      for (var i_data_chart_row = 1; i_data_chart_row < data.length; i_data_chart_row++) {
+        dataTable.addRow(data[i_data_chart_row]);
       }
       var chartBuilder = Charts.newLineChart()
         .setTitle(cupTitle + ' ' + homeTeam + ' v ' + awayTeam)
@@ -135,8 +135,7 @@ function scrapingTrigger() {
         '\n\n' + homeTeamHashTag + ' ' + awayTeamHashTag;
       status_txt = status_txt.substr(0, 140) // 140文字制限
 
-      tweetWithMedia(chart, status_txt);
-      Logger.log('Tweet Done:\n' + status_txt);
+      debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : tweetWithMedia(chart, status_txt);
 
       /// -----For debug-----
       /*
@@ -152,46 +151,40 @@ function scrapingTrigger() {
 
 
       // -----Tweet Summary-----
-      lastRow_seatPriceSheet = seatPriceSheet.getLastRow();
-      lastCol_seatPriceSheet = seatPriceSheet.getLastColumn();
+      var status_txt_forSummary_reserved = '席種 / 最新 / 平均\n';
+      var status_txt_forSummary_nonreserved = '';
 
-      var dataForSummary = seatPriceSheet.getRange(1, 1, lastRow_seatPriceSheet, lastCol_seatPriceSheet).getValues();
-      var status_txt_dataForSummary_reserved = '席種 / 最新 / 平均\n';
-      var status_txt_dataForSummary_nonreserved = '';
+      for (var i_data_forSummary_col = 1; i_data_forSummary_col < data[0].length; i_data_forSummary_col++) {
+        var tmp_data_forSummary_sum = 0;
+        var tmp_data_forSummary_numOfElements = 0;
+        var tmp_data_forSummary_avg = 0;
+        var tmp_data_forSummary_latest;
 
-      for (var i_dataForSummary_col = 1; i_dataForSummary_col < dataForSummary[0].length; i_dataForSummary_col++) {
-        var tmp_dataForSummary_sum = 0;
-        var tmp_dataForSummary_numOfElements = 0;
-        var tmp_dataForSummary_avg = 0;
-        var tmp_dataForSummary_latest;
-
-        for (var i_dataForSummary_row = 1; i_dataForSummary_row < dataForSummary.length; i_dataForSummary_row++) {
-          if (dataForSummary[i_dataForSummary_row][i_dataForSummary_col]) {
-            tmp_dataForSummary_sum += dataForSummary[i_dataForSummary_row][i_dataForSummary_col];
-            tmp_dataForSummary_numOfElements++;
+        for (var i_data_forSummary_row = 1; i_data_forSummary_row < data.length; i_data_forSummary_row++) {
+          if (data[i_data_forSummary_row][i_data_forSummary_col]) {
+            tmp_data_forSummary_sum += data[i_data_forSummary_row][i_data_forSummary_col];
+            tmp_data_forSummary_numOfElements++;
           }
         }
 
-        tmp_dataForSummary_avg = Math.round(tmp_dataForSummary_sum / tmp_dataForSummary_numOfElements);
-        tmp_dataForSummary_latest = dataForSummary[dataForSummary.length - 1][i_dataForSummary_col] ? dataForSummary[dataForSummary.length - 1][i_dataForSummary_col] : '-';
+        tmp_data_forSummary_avg = Math.round(tmp_data_forSummary_sum / tmp_data_forSummary_numOfElements);
+        tmp_data_forSummary_latest = data[data.length - 1][i_data_forSummary_col] ? data[data.length - 1][i_data_forSummary_col] : '-';
 
         // 140文字制限のため、指定席 or 自由席で分離
-        if (i_dataForSummary_col < 7) {
-          status_txt_dataForSummary_reserved += dataForSummary[0][i_dataForSummary_col] + ' / ' + tmp_dataForSummary_latest + ' / ' + tmp_dataForSummary_avg + '\n';
+        if (i_data_forSummary_col < 7) {
+          status_txt_forSummary_reserved += data[0][i_data_forSummary_col] + ' / ' + tmp_data_forSummary_latest + ' / ' + tmp_data_forSummary_avg + '\n';
         } else {
-          status_txt_dataForSummary_nonreserved += dataForSummary[0][i_dataForSummary_col] + ' / ' + tmp_dataForSummary_latest + ' / ' + tmp_dataForSummary_avg + '\n';
+          status_txt_forSummary_nonreserved += data[0][i_data_forSummary_col] + ' / ' + tmp_data_forSummary_latest + ' / ' + tmp_data_forSummary_avg + '\n';
         }
       }
 
       // リプライ形式でtweet
       // #1 指定席
       var recentTweet = Twitter.usertl(PropertiesService.getScriptProperties().getProperty('TWITTER_USER_ID'));
-      Twitter.tweet(status_txt_dataForSummary_reserved, recentTweet[0].id_str);
-      Logger.log(status_txt_dataForSummary_reserved);
+      debug_mode ? Logger.log('[DEBUG]\n' + status_txt_forSummary_reserved) : Twitter.tweet(status_txt_forSummary_reserved, recentTweet[0].id_str);
       // #2 自由席
       var recentTweet = Twitter.usertl(PropertiesService.getScriptProperties().getProperty('TWITTER_USER_ID'));
-      Twitter.tweet(status_txt_dataForSummary_nonreserved, recentTweet[0].id_str);
-      Logger.log(status_txt_dataForSummary_nonreserved);
+      debug_mode ? Logger.log('[DEBUG]\n' + status_txt_forSummary_nonreserved) : Twitter.tweet(status_txt_forSummary_nonreserved, recentTweet[0].id_str);
 
     } catch (e) {
       Logger.log('[Error] ' + e);
