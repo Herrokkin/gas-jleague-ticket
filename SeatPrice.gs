@@ -1,4 +1,4 @@
-function scrapingTrigger() {
+function seatPriceTrigger() {
   var debug_mode = false; // true => Run scraping but not post to Twitter
 
   var matchMasterSheet = SpreadsheetApp.getActive().getSheetByName('MatchMaster');
