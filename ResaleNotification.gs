@@ -40,15 +40,17 @@ function resaleNotificationTrigger() {
       var stadium = doc_stadium[0];
 
       // -----BEGIN リセール有無取得-----
-      var status_txt = '【リセールチケット新着情報】' +
+      var status_txt = '【リセールチケット残席あり】' +
         '\n' + cupTitle + ' ' + homeTeam + ' v ' + awayTeam +
         '\n' + gameDate + ' @ ' + stadium +
         '\n' + ticketUrlBitly +
+        '\n(' + formatDate(new Date(), 'yyyy/MM/dd HH:mm') + '時点)' +
         '\n\n' + homeTeamHashTag + ' ' + awayTeamHashTag;
       status_txt = status_txt.substr(0, 140) // 140文字制限
 
       // リセール有無判定 → Tweet
       if (html_JLeagueTicket.indexOf('リセールへ') !== -1) {
+        Logger.log('Resale ticket available');
         debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : Twitter.tweet(status_txt);
       } else {
         Logger.log('No resale ticket available');
