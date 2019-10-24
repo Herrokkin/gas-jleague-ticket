@@ -45,7 +45,7 @@ function resaleNotificationTrigger() {
         '\n' + gameDate + ' @ ' + stadium +
         '\n' + ticketUrlBitly +
         '\n(' + formatDate(new Date(), 'yyyy/MM/dd HH:mm') + '時点)' +
-        '\n\n' + homeTeamHashTag + ' ' + awayTeamHashTag;
+        '\n' + homeTeamHashTag + ' ' + awayTeamHashTag;
       status_txt = status_txt.substr(0, 140) // 140文字制限
 
       // リセール有無判定 → Tweet
