@@ -1,5 +1,4 @@
 function resaleNotificationTrigger() {
-  Utilities.sleep(9000); // Jリーグチケット更新反映を加味しNミリ秒待機
   var debug_mode = false; // true => Run scraping but not post to Twitter
 
   var matchMasterSheet = SpreadsheetApp.getActive().getSheetByName('MatchMaster');
@@ -11,6 +10,7 @@ function resaleNotificationTrigger() {
   // 毎時10分または40分にスクレイピング実行 (Jリーグチケットが30分おきに空席状況を更新するため)
   var dateNow = new Date();
   if (dateNow.getMinutes() === 10 || dateNow.getMinutes() === 40) {
+    Utilities.sleep(9000); // Jリーグチケット更新反映を加味しNミリ秒待機
     // -----試合毎にScraping実施-----
     for (var i_matchMasterValues = 0; i_matchMasterValues < matchMasterValues.length - 1; i_matchMasterValues++) {
       try {
