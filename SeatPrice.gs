@@ -115,7 +115,7 @@ function seatPriceTrigger() {
         dataTable.addRow(data[i_data_chart_row]);
       }
       var chartBuilder = Charts.newLineChart()
-        .setTitle(cupTitle + ' ' + homeTeam + ' v ' + awayTeam)
+        .setTitle(cupTitle + ' ' + homeTeam + ' vs ' + awayTeam)
         .setXAxisTitle('Date')
         .setYAxisTitle('Price (JPY)')
         .setDimensions(2560, 1440)
@@ -127,7 +127,7 @@ function seatPriceTrigger() {
       var chart = chartBuilder.build().getBlob();
 
       // -----Tweet Chart-----
-      var status_txt = '🎫ダイナミックプライシングチケット価格' +
+      var status_txt = '🎫ダイナミックプライシングチケット' +
         '\n' + cupTitle +
         '\n' + homeTeamHashTag + ' vs ' + awayTeamHashTag +
         '\n' + gameDate + ' @ ' + stadium +

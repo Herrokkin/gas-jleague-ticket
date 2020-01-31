@@ -24,7 +24,7 @@ function resaleNotificationTrigger() {
         var homeTeamHashTag = matchMasterValues[i_matchMasterValues][4];
         var awayTeamHashTag = matchMasterValues[i_matchMasterValues][5];
 
-        Logger.log(cupTitle + ' ' + homeTeam + ' v ' + awayTeam);
+        Logger.log(cupTitle + ' ' + homeTeam + ' vs ' + awayTeam);
 
         // -----Scraping_JLeagueTicket-----
         var html_JLeagueTicket = UrlFetchApp.fetch(ticketUrl).getContentText();
