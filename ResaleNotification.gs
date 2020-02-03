@@ -7,9 +7,9 @@ function resaleNotificationTrigger() {
   var resaleNotificationSheet = SpreadsheetApp.getActive().getSheetByName('ResaleNotification_2020');
   var resaleNotificationValues = resaleNotificationSheet.getRange(2, 1, resaleNotificationSheet.getLastRow(), resaleNotificationSheet.getLastColumn()).getValues();
 
-  // 毎時10分または40分にスクレイピング実行 (Jリーグチケットが30分おきに空席状況を更新するため)
+  // DO SCRAPING FOR EVERY (N) MINUTS
   var dateNow = new Date();
-  if (dateNow.getMinutes() === 10 || dateNow.getMinutes() === 40) {
+  if (dateNow.getMinutes() % 10 === 0) {
     Utilities.sleep(9000); // Jリーグチケット更新反映を加味しNミリ秒待機
     // -----試合毎にScraping実施-----
     for (var i_matchMasterValues = 0; i_matchMasterValues < matchMasterValues.length - 1; i_matchMasterValues++) {
@@ -50,7 +50,7 @@ function resaleNotificationTrigger() {
 
         // -----BEGIN リセール有無取得-----
         var status_txt = '🎫リセールチケット残席あり' +
-          '\n' + cupTitle + 
+          '\n' + cupTitle +
           '\n' + homeTeamHashTag + ' vs ' + awayTeamHashTag +
           '\n' + gameDate + ' @ ' + stadium +
           '\n' + ticketUrlBitly +
