@@ -141,16 +141,16 @@ function seatPriceTrigger() {
         debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : tweetWithMedia(chart, status_txt);
 
         /// -----For debug-----
-        /*
-        MailApp.sendEmail({
-          to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
-          subject: 'GAS Chart',
-          htmlBody: status_txt + '<br/><img src="cid:sampleCharts">',
-          inlineImages: {
-            sampleCharts: chart
-          }
-        });
-        */
+        if (debug_mode) {
+          MailApp.sendEmail({
+            to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
+            subject: 'GAS Chart',
+            htmlBody: status_txt + '<br/><img src="cid:sampleCharts">',
+            inlineImages: {
+              sampleCharts: chart
+            }
+          });
+        }
 
         // -----Tweet Summary-----
         var status_txt_forSummary_array = [];
