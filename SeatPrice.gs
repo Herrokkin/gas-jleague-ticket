@@ -56,7 +56,7 @@ function seatPriceTrigger() {
           .iterate();
 
         for (var i_doc_seatlist = 0; i_doc_seatlist < doc_seatlist.length; i_doc_seatlist++) {
-          if (doc_seatlist_is_vacant[i_doc_seatlist] !== 'bg-no' || doc_seatlist_is_vacant[i_doc_seatlist] !== 'bg-pre') { // 空きある場合のみ取得
+          if (doc_seatlist_is_vacant[i_doc_seatlist] !== 'bg-no' && doc_seatlist_is_vacant[i_doc_seatlist] !== 'bg-pre') { // 空きある場合のみ取得
             var seat_tmp = Parser.data(doc_seatlist[i_doc_seatlist])
               .from('<h4>')
               .to('</h4>')
