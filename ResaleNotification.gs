@@ -4,7 +4,7 @@ function resaleNotificationTrigger() {
   var matchMasterSheet = SpreadsheetApp.getActive().getSheetByName('MatchMaster');
   var matchMasterValues = matchMasterSheet.getRange(2, 1, matchMasterSheet.getLastRow(), matchMasterSheet.getLastColumn()).getValues();
 
-  var resaleNotificationSheet = SpreadsheetApp.getActive().getSheetByName('ResaleNotification_2020');
+  var resaleNotificationSheet = SpreadsheetApp.getActive().getSheetByName('ResaleNotification_2021');
   var resaleNotificationValues = resaleNotificationSheet.getRange(2, 1, resaleNotificationSheet.getLastRow(), resaleNotificationSheet.getLastColumn()).getValues();
 
   // DO SCRAPING FOR EVERY (N) MINUTS
@@ -23,79 +23,91 @@ function resaleNotificationTrigger() {
         var awayTeam = matchMasterValues[i_matchMasterValues][3];
         var homeTeamHashTag = matchMasterValues[i_matchMasterValues][4];
         var awayTeamHashTag = matchMasterValues[i_matchMasterValues][5];
+        var isResaleTicketAvailable = matchMasterValues[i_matchMasterValues][7];
+        var onSaleDate = matchMasterValues[i_matchMasterValues][8];
+        var dateNow = new Date();
 
-        Logger.log(cupTitle + ' ' + homeTeam + ' vs ' + awayTeam);
+        // -----BEGIN IF isDynamicPricing-----
+        if (dateNow > onSaleDate && isResaleTicketAvailable) { // 発売日以降かつリセール対応試合の場合
+          // -----BEGIN SCRAPING-----
+          var html_JLeagueTicket = UrlFetchApp.fetch(ticketUrl).getContentText();
+          // Parser: from().to()はfromとtoに挟まれた部分を抜き出します。build()で文字列、iterate()で文字列の配列が得られます。
 
-        // -----Scraping_JLeagueTicket-----
-        var html_JLeagueTicket = UrlFetchApp.fetch(ticketUrl).getContentText();
-        // Parser: from().to()はfromとtoに挟まれた部分を抜き出します。build()で文字列、iterate()で文字列の配列が得られます。
+          // GameInfo情報取得
+          // 試合日・スタジアム
+          var doc_date = Parser.data(html_JLeagueTicket)
+            .from('<span class="day">')
+            .to('</span>')
+            .iterate();
+          var gameDate = doc_date[0] + ' ' + doc_date[1];
 
-        // GameInfo情報取得
-        // 試合日・スタジアム
-        var doc_date = Parser.data(html_JLeagueTicket)
-          .from('<span class="day">')
-          .to('</span>')
-          .iterate();
-        var gameDate = doc_date[0] + ' ' + doc_date[1];
+          var doc_stadium_div = Parser.data(html_JLeagueTicket)
+            .from('<div class="game-info-stat-place">')
+            .to('</div>')
+            .build();
+          var doc_stadium = Parser.data(doc_stadium_div)
+            .from('<span>')
+            .to('</span>')
+            .iterate();
+          var stadium = doc_stadium[0];
+          // -----END SCRAPING-----
 
-        var doc_stadium_div = Parser.data(html_JLeagueTicket)
-          .from('<div class="game-info-stat-place">')
-          .to('</div>')
-          .build();
-        var doc_stadium = Parser.data(doc_stadium_div)
-          .from('<span>')
-          .to('</span>')
-          .iterate();
-        var stadium = doc_stadium[0];
+          // -----BEGIN SEARCH RESALE TICKET-----
+          var status_txt = '🎫リセールチケット残席あり' +
+            '\n' + cupTitle +
+            '\n' + homeTeamHashTag + ' vs ' + awayTeamHashTag +
+            '\n' + gameDate + ' @ ' + stadium +
+            '\n' + ticketUrlBitly +
+            '\n(' + formatDate(dateNow, 'yyyy/MM/dd HH:mm') + '時点)';
+          status_txt = status_txt.substr(0, 140) // 140文字制限
 
-        // -----BEGIN リセール有無取得-----
-        var status_txt = '🎫リセールチケット残席あり' +
-          '\n' + cupTitle +
-          '\n' + homeTeamHashTag + ' vs ' + awayTeamHashTag +
-          '\n' + gameDate + ' @ ' + stadium +
-          '\n' + ticketUrlBitly +
-          '\n(' + formatDate(dateNow, 'yyyy/MM/dd HH:mm') + '時点)';
-        status_txt = status_txt.substr(0, 140) // 140文字制限
+          // リセール有無判定 → Tweet
+          if (html_JLeagueTicket.indexOf('リセールへ') !== -1) {
+            Logger.log('Resale ticket available');
 
-        // リセール有無判定 → Tweet
-        if (html_JLeagueTicket.indexOf('リセールへ') !== -1) {
-          Logger.log('Resale ticket available');
+            for (var i_resaleNotificationValues = resaleNotificationValues.length - 1; i_resaleNotificationValues >= 0; i_resaleNotificationValues--) {
+              var matchId_resaleNotificationValues = resaleNotificationValues[i_resaleNotificationValues][1];
+              var hasReleaseTicket = resaleNotificationValues[i_resaleNotificationValues][5];
 
-          for (var i_resaleNotificationValues = resaleNotificationValues.length - 1; i_resaleNotificationValues >= 0; i_resaleNotificationValues--) {
-            var matchId_resaleNotificationValues = resaleNotificationValues[i_resaleNotificationValues][1];
-            var hasReleaseTicket = resaleNotificationValues[i_resaleNotificationValues][5];
+              if (matchId === matchId_resaleNotificationValues) {
+                // Write to sheet
+                var newRow_resaleNotificationSheet = resaleNotificationSheet.getLastRow() + 1;
+                resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 1).setValue(dateNow);
+                resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 2).setValue(matchId);
+                resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 3).setValue(cupTitle);
+                resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 4).setValue(homeTeam);
+                resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 5).setValue(awayTeam);
+                resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 6).setValue(true);
 
-            if (matchId === matchId_resaleNotificationValues) {
-              // Write to sheet
-              var newRow_resaleNotificationSheet = resaleNotificationSheet.getLastRow() + 1;
-              resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 1).setValue(dateNow);
-              resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 2).setValue(matchId);
-              resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 3).setValue(cupTitle);
-              resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 4).setValue(homeTeam);
-              resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 5).setValue(awayTeam);
-              resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 6).setValue(true);
+                if (hasReleaseTicket === false) {
+                  // 直近でリセール無しの場合のみTweet
+                  debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : Twitter.tweet(status_txt);
 
-              if (hasReleaseTicket === false) {
-                // 直近でリセール無しの場合のみTweet
-                debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : Twitter.tweet(status_txt);
+                  // ----Mail-----
+                  MailApp.sendEmail({
+                    to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
+                    subject: '190218_JLeagueTicket_Twitter > ResaleNotification',
+                    htmlBody: status_txt
+                  });
+                }
+                break;
               }
-              break;
             }
+          } else {
+            Logger.log('No resale ticket available');
+
+            // Write to sheet
+            var newRow_resaleNotificationSheet = resaleNotificationSheet.getLastRow() + 1;
+            resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 1).setValue(dateNow);
+            resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 2).setValue(matchId);
+            resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 3).setValue(cupTitle);
+            resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 4).setValue(homeTeam);
+            resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 5).setValue(awayTeam);
+            resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 6).setValue(false);
           }
-        } else {
-          Logger.log('No resale ticket available');
-
-          // Write to sheet
-          var newRow_resaleNotificationSheet = resaleNotificationSheet.getLastRow() + 1;
-          resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 1).setValue(dateNow);
-          resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 2).setValue(matchId);
-          resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 3).setValue(cupTitle);
-          resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 4).setValue(homeTeam);
-          resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 5).setValue(awayTeam);
-          resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 6).setValue(false);
+          // -----END SEARCH RESALE TICKET-----
         }
-
-        // -----END リセール有無取得-----
+        // -----END IF isDynamicPricing-----
       } catch (e) {
         Logger.log('[Error] ' + e);
       }

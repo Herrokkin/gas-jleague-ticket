@@ -17,9 +17,12 @@ function seatPriceTrigger() {
       var homeTeamHashTag = matchMasterValues[i_matchMasterValues][4];
       var awayTeamHashTag = matchMasterValues[i_matchMasterValues][5];
       var isDynamicPricing = matchMasterValues[i_matchMasterValues][6];
+      var isResaleTicketAvailable = matchMasterValues[i_matchMasterValues][7];
+      var onSaleDate = matchMasterValues[i_matchMasterValues][8];
+      var dateNow = new Date();
 
       // -----BEGIN IF isDynamicPricing-----
-      if (isDynamicPricing) {
+      if (dateNow > onSaleDate && isDynamicPricing) { // 発売日以降かつダイナミックプライシング適用試合の場合
         // -----BEGIN SCRAPING-----
         var html_JLeagueTicket = UrlFetchApp.fetch(ticketUrl).getContentText();
         // Parser: from().to()はfromとtoに挟まれた部分を抜き出します。build()で文字列、iterate()で文字列の配列が得られます。
