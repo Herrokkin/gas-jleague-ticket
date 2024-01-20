@@ -4,7 +4,7 @@ function resaleNotificationTrigger() {
   var matchMasterSheet = SpreadsheetApp.getActive().getSheetByName('MatchMaster');
   var matchMasterValues = matchMasterSheet.getRange(2, 1, matchMasterSheet.getLastRow(), matchMasterSheet.getLastColumn()).getValues();
 
-  var resaleNotificationSheet = SpreadsheetApp.getActive().getSheetByName('ResaleNotification_2021');
+  var resaleNotificationSheet = SpreadsheetApp.getActive().getSheetByName('ResaleNotification_2024');
   var resaleNotificationValues = resaleNotificationSheet.getRange(2, 1, resaleNotificationSheet.getLastRow(), resaleNotificationSheet.getLastColumn()).getValues();
 
   // DO SCRAPING FOR EVERY (N) MINUTS
@@ -80,15 +80,17 @@ function resaleNotificationTrigger() {
                 resaleNotificationSheet.getRange(newRow_resaleNotificationSheet, 6).setValue(true);
 
                 if (hasReleaseTicket === false) {
-                  // 直近でリセール無しの場合のみTweet
-                  debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : Twitter.tweet(status_txt);
+                  // 特定チームのリセール時に通知
+                  // if (homeTeam==="川崎フロンターレ") {
+                  //   MailApp.sendEmail({
+                  //     to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
+                  //     subject: '🎫リセールチケット残席あり',
+                  //     body: status_txt
+                  //   });
+                  // }
 
-                  // ----Mail-----
-                  MailApp.sendEmail({
-                    to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
-                    subject: '190218_JLeagueTicket_Twitter > ResaleNotification',
-                    htmlBody: status_txt
-                  });
+                  // 直近でリセール無しの場合のみTweet
+                  debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : post_tweet_v2(status_txt);
                 }
                 break;
               }

@@ -1,0 +1,58 @@
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+<script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
+<script>
+  google.script.run.withSuccessHandler(onSuccess).authpage();
+  
+  function onSuccess(data){
+    document.getElementById("kinoko").innerHTML = data;
+  }
+
+</script>
+
+<style type="text/css">
+  /* --- ボックス --- */
+  div.section {
+    width: 480px; /* ボックスの幅 */
+    background-color: #ffffff; /* ボックスの背景色 */
+    border: 1px #c0c0c0 solid; /* ボックスの境界線 */
+    font-size: 100%; /* ボックスの文字サイズ */
+  }
+  
+  /* --- 見出し --- */
+  div.section h3 {
+    margin: 0; /* 見出しのマージン */
+    padding: 6px 10px; /* 見出しのパディング（上下、左右） */
+    background-color: #f5f5f5; /* 見出しの背景色 */
+    border-bottom: 1px #c0c0c0 solid; /* 見出しの下境界線 */
+    font-size: 120%; /* 見出しの文字サイズ */
+  }
+  
+  /* --- ボックス内の段落 --- */
+  div.section p {
+    margin: 1em 10px; /* 段落のマージン（上下、左右） */
+  }
+</style>
+
+<div class='section'>
+<img border="0" src="https://officeforest.org/library/oauth2.png" alt="oauth2">
+<h3 id='header'>OAuth認証の許可が必要です。</h3>
+<hr>
+<div id="info">
+<p>
+このスクリプトは、Twitter APIにアクセスするために、特別なログイン処理を利用しています。<br>
+既に特別なログインに関する設定はなされており、承認がされるとプログラムを実行することが出来ます。この承認がなされない場合、プログラムの実行に制限が掛かり、
+処理が続行できません。<br><br>
+
+<div id="kinoko"></div>
+</div>
+<p>
+<script>
+function closeMe(){
+  if(google && google.script && google.script.host){
+      google.script.host.close();
+  } else if(window && window.close){
+      window.close();
+  } 
+}
+</script>
+</div>

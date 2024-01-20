@@ -1,6 +1,4 @@
 function seatPriceTrigger() {
-  var debug_mode = false; // true => Run scraping but not post to Twitter
-
   var matchMasterSheet = SpreadsheetApp.getActive().getSheetByName('MatchMaster');
   var matchMasterValues = matchMasterSheet.getRange(2, 1, matchMasterSheet.getLastRow(), matchMasterSheet.getLastColumn()).getValues();
 
@@ -103,34 +101,8 @@ function seatPriceTrigger() {
             }
           }
         }
-        // -----END SHEET OPERATION-----
-
-        // -----BEGIN CHART OPERATION-----
         var data = seatPriceSheet.getRange(1, 1, seatPriceSheet.getLastRow(), seatPriceSheet.getLastColumn()).getValues();
-        // Build data table
-        var dataTable = Charts.newDataTable();
-        // Add Column types
-        dataTable.addColumn(Charts.ColumnType.DATE, data[0][0]);
-        for (var i_data_chart_col = 1; i_data_chart_col < data[0].length; i_data_chart_col++) {
-          dataTable.addColumn(Charts.ColumnType.NUMBER, data[0][i_data_chart_col]);
-        }
-
-        // Add rows
-        for (var i_data_chart_row = 1; i_data_chart_row < data.length; i_data_chart_row++) {
-          dataTable.addRow(data[i_data_chart_row]);
-        }
-        var chartBuilder = Charts.newLineChart()
-          .setTitle(cupTitle + ' ' + homeTeam + ' vs ' + awayTeam)
-          .setXAxisTitle('Date')
-          .setYAxisTitle('Price (JPY)')
-          .setDimensions(2560, 1440)
-          .setPointStyle(Charts.PointStyle.MEDIUM)
-          .setOption('vAxis.logScale', true)
-          .setOption('vAxis.gridlines.count', -1)
-          .setOption('hAxis.gridlines.count', -1)
-          .setDataTable(dataTable);
-        var chart = chartBuilder.build().getBlob();
-        // -----BEGIN CHART OPERATION-----
+        // -----END SHEET OPERATION-----
 
         // -----BEGIN TWEET-----
         var status_txt = '🎫ダイナミックプライシングチケット' +
@@ -140,20 +112,6 @@ function seatPriceTrigger() {
           '\n' + ticketUrlBitly +
           '\n(' + formatDate(new Date(), 'yyyy/MM/dd') + '時点)';
         status_txt = status_txt.substr(0, 140) // 140文字制限
-
-        debug_mode ? Logger.log('[DEBUG]\nTweet Done:\n' + status_txt) : tweetWithMedia(chart, status_txt);
-
-        /// -----For debug-----
-        if (debug_mode) {
-          MailApp.sendEmail({
-            to: PropertiesService.getScriptProperties().getProperty("MAIL_TO"),
-            subject: 'GAS Chart',
-            htmlBody: status_txt + '<br/><img src="cid:sampleCharts">',
-            inlineImages: {
-              sampleCharts: chart
-            }
-          });
-        }
 
         // -----Tweet Summary-----
         var status_txt_forSummary_array = [];
@@ -189,13 +147,16 @@ function seatPriceTrigger() {
           }
         }
 
-        // リプライ形式でtweet
-        for (var i_status_txt_forSummary_array = 0; i_status_txt_forSummary_array < status_txt_forSummary_array.length; i_status_txt_forSummary_array++) {
-          var recentTweet = Twitter.usertl(PropertiesService.getScriptProperties().getProperty('TWITTER_USER_ID'));
-          debug_mode ? Logger.log('[DEBUG]\n' + status_txt_forSummary_array[i_status_txt_forSummary_array]) : Twitter.tweet(status_txt_forSummary_array[i_status_txt_forSummary_array], recentTweet[0].id_str);
-        }
-        // -----END TWEET-----
 
+        // リプライ形式でtweet
+        var last_tweet = post_tweet_v2(status_txt, null); // status_txtをtweet
+
+        // status_txt_forSummary_arrayをtweet
+        for (var i_status_txt_forSummary_array = 0; i_status_txt_forSummary_array < status_txt_forSummary_array.length; i_status_txt_forSummary_array++) {
+          last_tweet = post_tweet_v2(status_txt_forSummary_array[i_status_txt_forSummary_array], last_tweet.data.id);
+        }
+
+        // -----END TWEET-----
       }
       // -----END IF isDynamicPricing-----
 
